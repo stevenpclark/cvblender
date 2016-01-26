@@ -3,11 +3,13 @@ import random
 from random import uniform
 from math import pi, radians
 import subprocess
+from glob import glob
 
 def run():
     num_images_per_class = 10
     render_size = 128
 
+    bg_image_paths = glob('test_bg*')
     output_dir = os.path.join(os.path.dirname(__file__), 'output')
 
     scene = bpy.context.scene
@@ -16,7 +18,10 @@ def run():
     scene.render.resolution_y = render_size
     scene.render.resolution_percentage = 100
     tree = scene.node_tree
+    bg_node = tree.nodes['Image']
     blur_node = tree.nodes['Blur']
+
+    print(bg_node.image.filepath)
 
     cam = bpy.data.objects['CameraTarget']
     light = bpy.data.objects['SunTarget']
@@ -38,6 +43,8 @@ def run():
 
 
     for i in range(num_images_per_class):
+        bg_node.image.filepath = random.choice(bg_image_paths)
+
         cam_az_deg = uniform(cam_az_min_deg, cam_az_max_deg)
         cam_el_deg = uniform(cam_el_min_deg, cam_el_max_deg)
 
