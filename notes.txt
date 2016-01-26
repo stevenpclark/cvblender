@@ -1,0 +1,9 @@
+params which we might want to vary:
+    geometry:
+        x,y position
+        roll, pitch, yaw
+    camera:
+        angles, rotations
+        skews, stretches
+    illumination:
+        sun size, strength
