@@ -9,11 +9,8 @@ import json
 import argparse
 
 
-def render(cfg_path):
+def render(cfg):
     import bpy
-
-    with open(cfg_path, 'r') as cfg_file:
-        cfg = json.load(cfg_file)
 
     scene = bpy.context.scene
     scene.render.image_settings.file_format = 'PNG'
@@ -27,7 +24,7 @@ def render(cfg_path):
 
     cam = bpy.data.objects['CameraTarget']
     sun = bpy.data.objects['SunTarget']
-    object = bpy.data.objects['TargetOrigin']
+    obj = bpy.data.objects['TargetOrigin']
 
     for i in range(cfg['num_images']):
         output_filename = os.path.join(cfg['output_dir'], '%s%05d.png'%(cfg['filename_base'], i))
@@ -43,16 +40,21 @@ def render(cfg_path):
         sun_el_deg = uniform(cfg['sun_el_min'], cfg['sun_el_max'])
 
         jitter_range = cfg['pos_jitter_range']
-        target_x_pos = uniform(-jitter_range/2.0, jitter_range/2.0)
-        target_y_pos = uniform(-jitter_range/2.0, jitter_range/2.0)
-        target_z_pos = 0.0
+        obj_x_pos = uniform(-jitter_range/2.0, jitter_range/2.0)
+        obj_y_pos = uniform(-jitter_range/2.0, jitter_range/2.0)
+        obj_z_pos = 0.0
+        obj_roll_deg = uniform(cfg['roll_min'], cfg['roll_max'])
+        obj_pitch_deg = uniform(cfg['pitch_min'], cfg['pitch_max'])
+        obj_yaw_deg = uniform(cfg['yaw_min'], cfg['yaw_max'])
 
         emission_node.inputs[1].default_value = uniform(cfg['min_sun_strength'], cfg['max_sun_strength'])
         blur_node.inputs[1].default_value = uniform(0.0, cfg['max_blur'])
 
         cam.rotation_euler = (radians(90-cam_el_deg), 0.0, radians(180.0 - cam_az_deg))
         sun.rotation_euler = (radians(90-sun_el_deg), 0.0, radians(180.0 - sun_az_deg))
-        object.location = (target_x_pos, target_y_pos, target_z_pos)
+        obj.location = (obj_x_pos, obj_y_pos, obj_z_pos)
+        #TODO: verify this actually behaves as expected:
+        obj.rotation_euler = (radians(obj_pitch_deg), radians(obj_roll_deg), radians(obj_yaw_deg))
 
         scene.render.filepath = output_filename
         bpy.ops.render.render(write_still=True)
@@ -68,13 +70,18 @@ if __name__ == '__main__':
     except ImportError:
         inside_blender = False
 
-    if not inside_blender:
+    if inside_blender:
+        args = parser.parse_args(sys.argv[sys.argv.index('--')+1:])
+    else:
         args = parser.parse_args()
 
+    with open(args.cfg_path, 'r') as cfg_file:
+        cfg = json.load(cfg_file)
+
+    if not inside_blender:
         script_name = os.path.basename(__file__)
-        subprocess.check_call(['blender', 'test.blend', '-b', '-P', script_name, '--', args.cfg_path])
+        subprocess.check_call(['blender', cfg['blender_file'], '-b', '-P', script_name, '--', args.cfg_path])
     else:
-        args = parser.parse_args(sys.argv[sys.argv.index('--')+1:])
-        render(args.cfg_path)
+        render(cfg)
 
 

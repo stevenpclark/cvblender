@@ -1,7 +1,8 @@
 additional params which we might want to vary:
-    geometry:
-        roll, pitch, yaw
     camera:
         skews, stretches
     illumination:
-        sun size, strength
+        sun size
+
+document expected object constraints in blender file
+e.g. make ground plane obey RPY of target obj?
